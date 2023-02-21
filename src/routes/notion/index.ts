@@ -40,6 +40,10 @@ router.get('/search', async (req: Request, res: Response) => {
     auth: req.cookies[COOKIES.NOTION_ACCESS_TOKEN],
   });
 
+  console.log({
+    cookies: req.cookies,
+  });
+
   try {
     const response = await notion.search({});
 
@@ -53,6 +57,86 @@ router.get('/search', async (req: Request, res: Response) => {
     res.json({
       code: 500,
       message: error.message,
+    });
+  }
+});
+
+router.post('/export', async (req: Request, res: Response) => {
+  const { content, pageId } = req.body;
+
+  console.log({
+    content,
+    pageId,
+  });
+
+  const notion = new NotionClient({
+    auth: req.cookies[COOKIES.NOTION_ACCESS_TOKEN],
+  });
+
+  try {
+    const createdPage = await notion.pages.create({
+      parent: {
+        page_id: pageId,
+        type: 'page_id',
+      },
+      content: [
+        {
+          type: 'paragraph',
+          paragraph: {
+            rich_text: [
+              {
+                text: {
+                  content: 'content',
+                },
+              },
+            ],
+          },
+        },
+      ],
+      properties: null,
+    });
+
+    res.status(201);
+    res.json({
+      code: 201,
+      data: createdPage,
+    });
+  } catch (error) {
+    res.status(500);
+    res.json({
+      code: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.post('/check-auth', async (req: Request, res: Response) => {
+  const { token } = req.body;
+
+  console.log({ token });
+
+  try {
+    const notion = new NotionClient({
+      auth: token,
+    });
+
+    await notion.search({});
+
+    res.cookie(COOKIES.NOTION_ACCESS_TOKEN, token);
+
+    res.status(200);
+    res.json({
+      code: 200,
+      data: {
+        isAuth: true,
+      },
+    });
+  } catch (error) {
+    res.status(error.status);
+    res.json({
+      code: error.code,
+      message: error.message,
+      isAuth: false,
     });
   }
 });
