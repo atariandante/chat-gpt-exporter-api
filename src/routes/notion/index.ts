@@ -3,6 +3,7 @@ import { Client as NotionClient } from '@notionhq/client';
 
 import { exchangeCodeWithNotionToken } from '../../utils';
 import { COOKIES } from '../../constants';
+import { isNotionAnnotationType } from '../../utils/isNotionAnnotationType';
 
 const router = express.Router();
 
@@ -79,22 +80,28 @@ router.post('/export', async (req: Request, res: Response) => {
       children: content.content.map((chat) => ({
         type: chat.type,
         paragraph: {
-          rich_text: chat[chat.type].content.map((text) => ({
-            text: {
-              content: text.content,
-              ...(text.type === 'link' && {
-                link: {
-                  url: text.content,
+          rich_text: chat[chat.type].content.map((text) => {
+            console.log(text.type);
+
+            return {
+              text: {
+                content: text.content,
+                ...(text.type === 'link' && {
+                  link: {
+                    url: text.content,
+                  },
+                }),
+              },
+
+              ...(isNotionAnnotationType(text.type) && {
+                annotations: {
+                  [text.type]: true,
                 },
               }),
-            },
 
-            ...(text.type === 'bold' && {
-              annotations: {
-                [text.type]: true,
-              },
-            }),
-          })),
+              plain_text: text.content,
+            };
+          }),
         },
       })),
     });
