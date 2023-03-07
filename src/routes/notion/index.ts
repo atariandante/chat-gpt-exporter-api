@@ -74,32 +74,27 @@ router.post('/export', async (req: Request, res: Response) => {
   });
 
   try {
-    const createdPage = await notion.pages.create({
-      parent: {
-        page_id: pageId,
-        type: 'page_id',
-      },
-      content: [
-        {
-          type: 'paragraph',
-          paragraph: {
-            rich_text: [
-              {
-                text: {
-                  content: 'content',
-                },
+    const createdBlock = await notion.blocks.children.append({
+      block_id: pageId,
+      children: content.content.map((chat) => ({
+        type: 'paragraph',
+        paragraph: {
+          rich_text: [
+            {
+              type: 'text',
+              text: {
+                content: chat.content,
               },
-            ],
-          },
+            },
+          ],
         },
-      ],
-      properties: null,
+      })),
     });
 
     res.status(201);
     res.json({
       code: 201,
-      data: createdPage,
+      data: createdBlock,
     });
   } catch (error) {
     res.status(500);
