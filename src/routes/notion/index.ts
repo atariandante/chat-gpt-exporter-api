@@ -77,16 +77,24 @@ router.post('/export', async (req: Request, res: Response) => {
     const createdBlock = await notion.blocks.children.append({
       block_id: pageId,
       children: content.content.map((chat) => ({
-        type: 'paragraph',
+        type: chat.type,
         paragraph: {
-          rich_text: [
-            {
-              type: 'text',
-              text: {
-                content: chat.content,
-              },
+          rich_text: chat[chat.type].content.map((text) => ({
+            text: {
+              content: text.content,
+              ...(text.type === 'link' && {
+                link: {
+                  url: text.content,
+                },
+              }),
             },
-          ],
+
+            ...(text.type === 'bold' && {
+              annotations: {
+                [text.type]: true,
+              },
+            }),
+          })),
         },
       })),
     });
