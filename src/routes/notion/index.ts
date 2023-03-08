@@ -44,10 +44,6 @@ router.get('/search', async (req: Request, res: Response) => {
     auth: req.cookies[COOKIES.NOTION_ACCESS_TOKEN],
   });
 
-  console.log({
-    cookies: req.cookies,
-  });
-
   try {
     const response = await notion.search({});
 
