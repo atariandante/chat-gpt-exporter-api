@@ -1,4 +1,4 @@
-type NotionAnnotationType =
+export type NotionAnnotationType =
   | 'underline'
   | 'color'
   | 'strikethrough'

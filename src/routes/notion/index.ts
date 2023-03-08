@@ -4,6 +4,9 @@ import { Client as NotionClient } from '@notionhq/client';
 import { exchangeCodeWithNotionToken } from '../../utils';
 import { COOKIES } from '../../constants';
 import { isNotionAnnotationType } from '../../utils/isNotionAnnotationType';
+import { fromStringNodeToNotionKey } from '../../utils/fromNodeToNotionKey';
+import { createRichText } from '../../utils/createRichText';
+import createNotionBlock from '../../utils/createNotionBlock';
 
 const router = express.Router();
 
@@ -65,11 +68,6 @@ router.get('/search', async (req: Request, res: Response) => {
 router.post('/export', async (req: Request, res: Response) => {
   const { content, pageId } = req.body;
 
-  console.log({
-    content,
-    pageId,
-  });
-
   const notion = new NotionClient({
     auth: req.cookies[COOKIES.NOTION_ACCESS_TOKEN],
   });
@@ -77,33 +75,7 @@ router.post('/export', async (req: Request, res: Response) => {
   try {
     const createdBlock = await notion.blocks.children.append({
       block_id: pageId,
-      children: content.content.map((chat) => ({
-        type: chat.type,
-        paragraph: {
-          rich_text: chat[chat.type].content.map((text) => {
-            console.log(text.type);
-
-            return {
-              text: {
-                content: text.content,
-                ...(text.type === 'link' && {
-                  link: {
-                    url: text.content,
-                  },
-                }),
-              },
-
-              ...(isNotionAnnotationType(text.type) && {
-                annotations: {
-                  [text.type]: true,
-                },
-              }),
-
-              plain_text: text.content,
-            };
-          }),
-        },
-      })),
+      children: createNotionBlock(content.content),
     });
 
     res.status(201);
@@ -122,8 +94,6 @@ router.post('/export', async (req: Request, res: Response) => {
 
 router.post('/check-auth', async (req: Request, res: Response) => {
   const { token } = req.body;
-
-  console.log({ token });
 
   try {
     const notion = new NotionClient({
